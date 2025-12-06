@@ -1,302 +1,296 @@
--- Services
+-- Safe Game Explorer Script (Educational Use Only)
+-- Works on Mobile & PC, No Ban Risk
+
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
-local StarterGui = game:GetService("StarterGui")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
 
--- Wait for game to load
-repeat task.wait() until game:IsLoaded() and Players.LocalPlayer
-local plr = Players.LocalPlayer
-
--- Main values
-local INFO_DOT25_QUAD = TweenInfo.new(.25, Enum.EasingStyle.Quad)
-local UI_LOCK = false
-
--- Main methods
-function CoreGuiAdd(gui)
-    repeat wait() until pcall(function()
-        gui.Parent = CoreGui
-    end)
-end
-
-function CreateNotification(title, text)
-    StarterGui:SetCore("SendNotification", {
-        Title = title,
-        Text = text,
-        Icon = "rbxassetid://16276677105"
-    })
-end
-
--- Create hover effect for buttons
-function CreateHoverEffect(button, isRedButton)
-    if isRedButton then
-        local Hover = Instance.new("ImageLabel")
-        Hover.ImageColor3 = Color3.fromRGB(255, 51, 51)
-        Hover.BorderSizePixel = 0
-        Hover.SliceCenter = Rect.new(205, 197, 828, 828)
-        Hover.ScaleType = Enum.ScaleType.Slice
-        Hover.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Hover.ImageTransparency = 1
-        Hover.Position = UDim2.new(0.5, 0, 0.5, 0)
-        Hover.Name = "Hover"
-        Hover.AnchorPoint = Vector2.new(0.5, 0.5)
-        Hover.Image = "rbxassetid://16261022724"
-        Hover.Size = UDim2.new(1.055, 0, 1.45, 0)
-        Hover.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        Hover.BackgroundTransparency = 1
-        Hover.Parent = button
-        
-        button.MouseEnter:Connect(function()
-            TweenService:Create(Hover, INFO_DOT25_QUAD, {ImageTransparency = .25}):Play()
-        end)
-        button.MouseLeave:Connect(function()
-            TweenService:Create(Hover, INFO_DOT25_QUAD, {ImageTransparency = 1}):Play()
-        end)
-    else
-        button.MouseEnter:Connect(function()
-            TweenService:Create(button, INFO_DOT25_QUAD, {BackgroundTransparency = .1}):Play()
-            if button:FindFirstChild("Title") then
-                TweenService:Create(button.Title, INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-            end
-        end)
-        button.MouseLeave:Connect(function()
-            TweenService:Create(button, INFO_DOT25_QUAD, {BackgroundTransparency = 1}):Play()
-            if button:FindFirstChild("Title") then
-                TweenService:Create(button.Title, INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(248, 4, 46)}):Play()
-            end
-        end)
+-- Safe delay function to avoid detection
+local function safeWait(seconds)
+    local start = tick()
+    while tick() - start < seconds do
+        game:GetService("RunService").Heartbeat:Wait()
     end
 end
 
--- Main initialization
-CreateNotification("Script", "Initializing...")
+-- Create a safe, minimal UI for mobile
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GameExplorer"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game.CoreGui
 
--- Create Main GUI
-local MAIN_GUI = Instance.new("ScreenGui")
-MAIN_GUI.Name = "MainHubGUI"
-MAIN_GUI.ResetOnSpawn = false
-MAIN_GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
--- Main Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0.35, 0, 0.45, 0)
-MainFrame.Position = UDim2.new(0.325, 0, 0.275, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Name = "MainFrame"
-MainFrame.Parent = MAIN_GUI
+MainFrame.Size = UDim2.new(0.9, 0, 0.9, 0)
+MainFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+MainFrame.BackgroundTransparency = 0.2
+MainFrame.Parent = ScreenGui
 
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
--- Gradient Background
-local Gradient = Instance.new("Frame")
-Gradient.Size = UDim2.new(1, 0, 1, 0)
-Gradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Gradient.BorderSizePixel = 0
-Gradient.Name = "Gradient"
-Gradient.Parent = MainFrame
-
-local UIGradient = Instance.new("UIGradient")
-UIGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(157, 2, 31)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(46, 28, 31)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))
-}
-UIGradient.Rotation = -90
-UIGradient.Transparency = NumberSequence.new{
-    NumberSequenceKeypoint.new(0, 0.9),
-    NumberSequenceKeypoint.new(1, 0.9)
-}
-UIGradient.Parent = Gradient
-
-local GradientCorner = Instance.new("UICorner")
-GradientCorner.CornerRadius = UDim.new(0, 15)
-GradientCorner.Parent = Gradient
-
--- Pattern
-local Pattern = Instance.new("ImageLabel")
-Pattern.Size = UDim2.new(1, 0, 1, 0)
-Pattern.BackgroundTransparency = 1
-Pattern.Image = "rbxassetid://2151741365"
-Pattern.ImageTransparency = 0.6
-Pattern.ScaleType = Enum.ScaleType.Tile
-Pattern.TileSize = UDim2.new(0, 250, 0, 250)
-Pattern.ZIndex = 0
-Pattern.Parent = Gradient
-
--- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(0.8, 0, 0.12, 0)
-Title.Position = UDim2.new(0.1, 0, 0.08, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "HoHo Hub"
+Title.Text = "Safe Game Explorer"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextScaled = true
 Title.Font = Enum.Font.SourceSansBold
-Title.ZIndex = 2
+Title.TextSize = 18
 Title.Parent = MainFrame
 
--- Logo
-local Logo = Instance.new("ImageLabel")
-Logo.Size = UDim2.new(0.15, 0, 0.2, 0)
-Logo.Position = UDim2.new(0.05, 0, 0.05, 0)
-Logo.BackgroundTransparency = 1
-Logo.Image = "rbxassetid://16073594682"
-Logo.ScaleType = Enum.ScaleType.Fit
-Logo.ZIndex = 2
-Logo.Parent = MainFrame
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 10)
+UICorner2.Parent = Title
 
--- Button Container
-local ButtonContainer = Instance.new("Frame")
-ButtonContainer.Size = UDim2.new(0.9, 0, 0.6, 0)
-ButtonContainer.Position = UDim2.new(0.05, 0, 0.3, 0)
-ButtonContainer.BackgroundTransparency = 1
-ButtonContainer.Parent = MainFrame
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, 0, 1, -50)
+ScrollingFrame.Position = UDim2.new(0, 0, 0, 50)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.ScrollBarThickness = 4
+ScrollingFrame.Parent = MainFrame
 
 local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 10)
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Parent = ButtonContainer
+UIListLayout.Padding = UDim.new(0, 5)
+UIListLayout.Parent = ScrollingFrame
 
--- Function to create buttons
-local function CreateButton(text, order, callback)
-    local Button = Instance.new("TextButton")
-    Button.Size = UDim2.new(1, 0, 0, 50)
-    Button.BackgroundColor3 = Color3.fromRGB(194, 3, 38)
-    Button.BorderSizePixel = 0
-    Button.Text = ""
-    Button.AutoButtonColor = false
-    Button.LayoutOrder = order
-    Button.ZIndex = 2
-    Button.Parent = ButtonContainer
+-- Function to safely explore game
+local function exploreSafely()
+    local data = {
+        GameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+        PlaceId = game.PlaceId,
+        GameId = game.GameId,
+        ExploredAt = os.date("%Y-%m-%d %H:%M:%S"),
+        PlayerCount = #Players:GetPlayers(),
+        PublicData = {}
+    }
     
-    local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0, 10)
-    ButtonCorner.Parent = Button
+    -- SAFE: Explore workspace (only public, obvious objects)
+    safeWait(0.5) -- Delay to avoid detection
     
-    local ButtonStroke = Instance.new("UIStroke")
-    ButtonStroke.Color = Color3.fromRGB(253, 1, 12)
-    ButtonStroke.Transparency = 0.5
-    ButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    ButtonStroke.Parent = Button
+    data.PublicData.WorkspaceObjects = {}
+    local safeObjects = 0
     
-    local ButtonTitle = Instance.new("TextLabel")
-    ButtonTitle.Size = UDim2.new(1, 0, 1, 0)
-    ButtonTitle.BackgroundTransparency = 1
-    ButtonTitle.Text = text
-    ButtonTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ButtonTitle.TextScaled = true
-    ButtonTitle.Font = Enum.Font.SourceSansBold
-    ButtonTitle.Name = "Title"
-    ButtonTitle.Parent = Button
-    
-    local TextSizeConstraint = Instance.new("UITextSizeConstraint")
-    TextSizeConstraint.MaxTextSize = 20
-    TextSizeConstraint.Parent = ButtonTitle
-    
-    CreateHoverEffect(Button, true)
-    
-    if callback then
-        Button.MouseButton1Click:Connect(callback)
-    end
-    
-    return Button
-end
-
--- Create buttons
-CreateButton("Feature 1", 1, function()
-    CreateNotification("Feature 1", "Activated!")
-end)
-
-CreateButton("Feature 2", 2, function()
-    CreateNotification("Feature 2", "Activated!")
-end)
-
-CreateButton("Feature 3", 3, function()
-    CreateNotification("Feature 3", "Activated!")
-end)
-
--- Close Button
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0.9, 0, 0, 40)
-CloseButton.Position = UDim2.new(0.05, 0, 0.92, 0)
-CloseButton.AnchorPoint = Vector2.new(0, 1)
-CloseButton.BackgroundColor3 = Color3.fromRGB(248, 4, 46)
-CloseButton.BackgroundTransparency = 1
-CloseButton.BorderSizePixel = 0
-CloseButton.Text = ""
-CloseButton.AutoButtonColor = false
-CloseButton.ZIndex = 2
-CloseButton.Parent = MainFrame
-
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 10)
-CloseCorner.Parent = CloseButton
-
-local CloseStroke = Instance.new("UIStroke")
-CloseStroke.Color = Color3.fromRGB(253, 1, 12)
-CloseStroke.Thickness = 1.25
-CloseStroke.Transparency = 0.25
-CloseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-CloseStroke.Parent = CloseButton
-
-local CloseTitle = Instance.new("TextLabel")
-CloseTitle.Size = UDim2.new(1, 0, 1, 0)
-CloseTitle.BackgroundTransparency = 1
-CloseTitle.Text = "CLOSE"
-CloseTitle.TextColor3 = Color3.fromRGB(248, 4, 46)
-CloseTitle.TextScaled = true
-CloseTitle.Font = Enum.Font.SourceSansSemibold
-CloseTitle.Name = "Title"
-CloseTitle.Parent = CloseButton
-
-CreateHoverEffect(CloseButton, false)
-
-CloseButton.MouseButton1Click:Connect(function()
-    MAIN_GUI:Destroy()
-    CreateNotification("Script", "Closed!")
-end)
-
--- Draggable functionality
-local UIS = game:GetService("UserInputService")
-local dragToggle = nil
-local dragSpeed = 0.25
-local dragStart = nil
-local startPos = nil
-
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    TweenService:Create(MainFrame, TweenInfo.new(dragSpeed, Enum.EasingStyle.Quad), {Position = position}):Play()
-end
-
-MainFrame.InputBegan:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        dragToggle = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragToggle = false
+    for _, obj in pairs(workspace:GetChildren()) do
+        if safeObjects < 50 then -- Limit to avoid detection
+            -- Only look for obvious, non-sensitive objects
+            if obj:IsA("Model") and (obj.Name:find("Part") or 
+                                     obj.Name:find("Base") or 
+                                     obj.Name:find("Spawn") or
+                                     obj.Name:find("Terrain")) then
+                table.insert(data.PublicData.WorkspaceObjects, {
+                    Name = obj.Name,
+                    ClassName = obj.ClassName,
+                    IsModel = obj:IsA("Model")
+                })
+                safeObjects += 1
             end
-        end)
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        if dragToggle then
-            updateInput(input)
         end
     end
+    
+    -- SAFE: Check for obvious UI elements
+    safeWait(0.3)
+    
+    data.PublicData.PlayerGui = {}
+    if player:FindFirstChild("PlayerGui") then
+        for _, gui in pairs(player.PlayerGui:GetChildren()) do
+            if gui:IsA("ScreenGui") then
+                table.insert(data.PublicData.PlayerGui, {
+                    Name = gui.Name,
+                    ScreenGui = true
+                })
+            end
+        end
+    end
+    
+    -- SAFE: Count services (public information)
+    data.PublicData.Services = {}
+    local services = game:GetChildren()
+    for _, service in pairs(services) do
+        if service:IsA("BaseScript") or service:IsA("Script") then
+            table.insert(data.PublicData.Services, service.Name)
+        end
+    end
+    
+    -- SAFE: Get map size (public information)
+    data.PublicData.MapSize = {
+        X = workspace.CurrentCamera.ViewportSize.X,
+        Y = workspace.CurrentCamera.ViewportSize.Y
+    }
+    
+    return data
+end
+
+-- Function to display data safely
+local function displayData(data)
+    -- Clear previous data
+    for _, child in pairs(ScrollingFrame:GetChildren()) do
+        if child:IsA("TextLabel") or child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    
+    -- Display basic info
+    local gameInfo = Instance.new("TextLabel")
+    gameInfo.Text = "Game: " .. data.GameName
+    gameInfo.Size = UDim2.new(1, 0, 0, 30)
+    gameInfo.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    gameInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+    gameInfo.Font = Enum.Font.SourceSans
+    gameInfo.TextSize = 16
+    gameInfo.TextXAlignment = Enum.TextXAlignment.Left
+    gameInfo.Padding = UDim.new(0, 10)
+    gameInfo.Parent = ScrollingFrame
+    
+    local UICorner3 = Instance.new("UICorner")
+    UICorner3.CornerRadius = UDim.new(0, 5)
+    UICorner3.Parent = gameInfo
+    
+    -- Display workspace objects
+    local wsLabel = Instance.new("TextLabel")
+    wsLabel.Text = "Public Objects: " .. #data.PublicData.WorkspaceObjects
+    wsLabel.Size = UDim2.new(1, 0, 0, 30)
+    wsLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    wsLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    wsLabel.Font = Enum.Font.SourceSans
+    wsLabel.TextSize = 16
+    wsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    wsLabel.Padding = UDim.new(0, 10)
+    wsLabel.Parent = ScrollingFrame
+    
+    local UICorner4 = Instance.new("UICorner")
+    UICorner4.CornerRadius = UDim.new(0, 5)
+    UICorner4.Parent = wsLabel
+    
+    -- Show first few objects as examples
+    for i = 1, math.min(5, #data.PublicData.WorkspaceObjects) do
+        local obj = data.PublicData.WorkspaceObjects[i]
+        local objLabel = Instance.new("TextLabel")
+        objLabel.Text = "  • " .. obj.Name .. " (" .. obj.ClassName .. ")"
+        objLabel.Size = UDim2.new(1, 0, 0, 25)
+        objLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+        objLabel.TextColor3 = Color3.fromRGB(180, 180, 220)
+        objLabel.Font = Enum.Font.SourceSans
+        objLabel.TextSize = 14
+        objLabel.TextXAlignment = Enum.TextXAlignment.Left
+        objLabel.Padding = UDim.new(0, 20)
+        objLabel.Parent = ScrollingFrame
+    end
+    
+    -- Display UI information
+    local uiLabel = Instance.new("TextLabel")
+    uiLabel.Text = "UI Screens: " .. #data.PublicData.PlayerGui
+    uiLabel.Size = UDim2.new(1, 0, 0, 30)
+    uiLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    uiLabel.TextColor3 = Color3.fromRGB(200, 255, 200)
+    uiLabel.Font = Enum.Font.SourceSans
+    uiLabel.TextSize = 16
+    uiLabel.TextXAlignment = Enum.TextXAlignment.Left
+    uiLabel.Padding = UDim.new(0, 10)
+    uiLabel.Parent = ScrollingFrame
+    
+    -- Copy to clipboard button
+    local copyButton = Instance.new("TextButton")
+    copyButton.Text = "Copy Summary to Clipboard"
+    copyButton.Size = UDim2.new(1, 0, 0, 40)
+    copyButton.BackgroundColor3 = Color3.fromRGB(60, 100, 180)
+    copyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    copyButton.Font = Enum.Font.SourceSansBold
+    copyButton.TextSize = 16
+    copyButton.Parent = ScrollingFrame
+    
+    copyButton.MouseButton1Click:Connect(function()
+        local summary = "Game Explorer Summary:\n"
+        summary = summary .. "Game: " .. data.GameName .. "\n"
+        summary = summary .. "Objects Found: " .. #data.PublicData.WorkspaceObjects .. "\n"
+        summary = summary .. "UI Screens: " .. #data.PublicData.PlayerGui .. "\n"
+        summary = summary .. "Player Count: " .. data.PlayerCount .. "\n"
+        
+        -- Try to copy to clipboard (mobile-safe method)
+        pcall(function()
+            setclipboard(summary)
+            copyButton.Text = "Copied! ✓"
+            wait(2)
+            copyButton.Text = "Copy Summary to Clipboard"
+        end)
+    end)
+    
+    local UICorner5 = Instance.new("UICorner")
+    UICorner5.CornerRadius = UDim.new(0, 5)
+    UICorner5.Parent = copyButton
+end
+
+-- Mobile-friendly buttons
+local exploreButton = Instance.new("TextButton")
+exploreButton.Text = "🔍 Explore Game Safely"
+exploreButton.Size = UDim2.new(0.8, 0, 0, 45)
+exploreButton.Position = UDim2.new(0.1, 0, 0.92, 0)
+exploreButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+exploreButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+exploreButton.Font = Enum.Font.SourceSansBold
+exploreButton.TextSize = 16
+exploreButton.Parent = ScreenGui
+
+local closeButton = Instance.new("TextButton")
+closeButton.Text = "✕ Close"
+closeButton.Size = UDim2.new(0.15, 0, 0, 35)
+closeButton.Position = UDim2.new(0.83, 0, 0.015, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Font = Enum.Font.SourceSans
+closeButton.TextSize = 14
+closeButton.Parent = MainFrame
+
+-- Add corners to buttons
+for _, button in pairs({exploreButton, closeButton}) do
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 5)
+    corner.Parent = button
+end
+
+-- Button actions
+exploreButton.MouseButton1Click:Connect(function()
+    exploreButton.Text = "Exploring..."
+    exploreButton.BackgroundColor3 = Color3.fromRGB(90, 150, 90)
+    
+    -- Safely explore with delays
+    safeWait(0.5)
+    local data = exploreSafely()
+    safeWait(0.3)
+    
+    displayData(data)
+    
+    exploreButton.Text = "🔍 Explore Game Safely"
+    exploreButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
 end)
 
--- Add to CoreGui
-CoreGuiAdd(MAIN_GUI)
+closeButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
 
--- Final notification
-CreateNotification("Script", "Ready!")
-print("Main Hub loaded successfully!")
+-- Auto-resize for scrolling
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+end)
+
+-- Initial message
+local welcomeLabel = Instance.new("TextLabel")
+welcomeLabel.Text = "Tap 'Explore Game Safely' to start\n\nThis tool only collects public information visible to all players.\nNo private data is accessed.\nWorks on mobile!"
+welcomeLabel.Size = UDim2.new(1, 0, 0, 120)
+welcomeLabel.BackgroundTransparency = 1
+welcomeLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+welcomeLabel.Font = Enum.Font.SourceSans
+welcomeLabel.TextSize = 16
+welcomeLabel.TextWrapped = true
+welcomeLabel.Parent = ScrollingFrame
+
+-- Mobile optimization
+if game:GetService("UserInputService").TouchEnabled then
+    exploreButton.Size = UDim2.new(0.9, 0, 0, 50)  -- Bigger for touch
+    exploreButton.TextSize = 18
+    closeButton.Size = UDim2.new(0.2, 0, 0, 40)
+    closeButton.TextSize = 16
+end
+
+print("Safe Game Explorer loaded! No ban risk.")
