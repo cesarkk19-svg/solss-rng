@@ -1,0 +1,156 @@
+-- Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+
+-- Wait for game to load
+repeat task.wait() until game:IsLoaded() and Players.LocalPlayer
+local plr = Players.LocalPlayer
+
+-- Main values
+local INFO_DOT25_QUAD = TweenInfo.new(.25, Enum.EasingStyle.Quad)
+local UI_LOCK = true
+
+-- Main methods
+function CoreGuiAdd(gui)
+    repeat wait() until pcall(function()
+        gui.Parent = CoreGui
+    end)
+end
+
+function isNotLocked(v)
+    if not v:GetAttribute("Locked") and UI_LOCK == false then
+        return true
+    end
+end
+
+function CreateNotification(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Icon = "rbxassetid://16276677105"
+    })
+end
+
+-- Create hover effect for buttons
+function CreateHoverEffect(button, isRedButton)
+    if isRedButton then
+        local Hover = Instance.new("ImageLabel")
+        Hover.ImageColor3 = Color3.fromRGB(255, 51, 51)
+        Hover.BorderSizePixel = 0
+        Hover.SliceCenter = Rect.new(205, 197, 828, 828)
+        Hover.ScaleType = Enum.ScaleType.Slice
+        Hover.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Hover.ImageTransparency = 1
+        Hover.Position = UDim2.new(0.5, 0, 0.5, 0)
+        Hover.Name = "Hover"
+        Hover.AnchorPoint = Vector2.new(0.5, 0.5)
+        Hover.Image = "rbxassetid://16261022724"
+        Hover.Size = UDim2.new(1.055, 0, 1.45, 0)
+        Hover.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Hover.BackgroundTransparency = 1
+        Hover.Parent = button
+        
+        button.MouseEnter:Connect(function()
+            TweenService:Create(Hover, INFO_DOT25_QUAD, {ImageTransparency = .25}):Play()
+        end)
+        button.MouseLeave:Connect(function()
+            TweenService:Create(Hover, INFO_DOT25_QUAD, {ImageTransparency = 1}):Play()
+        end)
+    else
+        button.MouseEnter:Connect(function()
+            TweenService:Create(button, INFO_DOT25_QUAD, {BackgroundTransparency = .1}):Play()
+            if button:FindFirstChild("Title") then
+                TweenService:Create(button.Title, INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            end
+        end)
+        button.MouseLeave:Connect(function()
+            TweenService:Create(button, INFO_DOT25_QUAD, {BackgroundTransparency = 1}):Play()
+            if button:FindFirstChild("Title") then
+                TweenService:Create(button.Title, INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(248, 4, 46)}):Play()
+            end
+        end)
+    end
+end
+
+-- Create textbox focus effect
+function CreateTextboxEffect(frame)
+    local textbox = frame:FindFirstChild("Textbox")
+    local gradient = frame:FindFirstChild("Gradient")
+    local stroke = frame:FindFirstChild("UIStroke")
+    
+    if not textbox or not gradient or not stroke then return end
+    
+    local gradientTween = stroke:FindFirstChild("UIGradient")
+    if not gradientTween then return end
+    
+    local tween_1_in = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 0})
+    local tween_2_in = TweenService:Create(gradientTween, INFO_DOT25_QUAD, {Offset = Vector2.new(0, -.5)})
+    
+    local tween_1_out = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 1})
+    local tween_2_out = TweenService:Create(gradientTween, INFO_DOT25_QUAD, {Offset = Vector2.new(0, 0)})
+    
+    textbox.Focused:Connect(function()
+        tween_1_in:Play()
+        tween_2_in:Play()
+    end)
+    
+    textbox.FocusLost:Connect(function()
+        tween_1_out:Play()
+        tween_2_out:Play()
+    end)
+end
+
+-- Create loading bar animation
+function AnimateLoadingBar(contentFrame, duration)
+    duration = duration or 2
+    local steps = 50
+    local stepDuration = duration / steps
+    
+    for i = 1, steps do
+        local progress = i / steps
+        TweenService:Create(contentFrame, TweenInfo.new(stepDuration, Enum.EasingStyle.Linear), {
+            Size = UDim2.new(progress, 0, 1, 0)
+        }):Play()
+        task.wait(stepDuration)
+    end
+end
+
+-- Fade in/out GUI
+function FadeGUI(gui, fadeIn, duration)
+    duration = duration or 0.25
+    local targetTransparency = fadeIn and 0 or 1
+    TweenService:Create(gui, TweenInfo.new(duration, Enum.EasingStyle.Quad), {
+        GroupTransparency = targetTransparency
+    }):Play()
+    task.wait(duration)
+end
+
+-- Main initialization
+CreateNotification("Script", "Initializing...")
+
+print("Main values and methods loaded!")
+print("INFO_DOT25_QUAD:", INFO_DOT25_QUAD)
+print("Player:", plr.Name)
+
+-- YOUR MAIN SCRIPT HERE
+-- Example usage:
+--[[
+    local gui = Instance.new("ScreenGui")
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0.2, 0, 0.1, 0)
+    button.Position = UDim2.new(0.4, 0, 0.45, 0)
+    button.Text = "Click Me"
+    button.Parent = gui
+    CoreGuiAdd(gui)
+    
+    CreateHoverEffect(button, true)
+    
+    button.MouseButton1Click:Connect(function()
+        CreateNotification("Button", "Clicked!")
+    end)
+]]
+
+UI_LOCK = false
+CreateNotification("Script", "Ready!")
