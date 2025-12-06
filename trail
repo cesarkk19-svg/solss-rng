@@ -10,19 +10,13 @@ local plr = Players.LocalPlayer
 
 -- Main values
 local INFO_DOT25_QUAD = TweenInfo.new(.25, Enum.EasingStyle.Quad)
-local UI_LOCK = true
+local UI_LOCK = false
 
 -- Main methods
 function CoreGuiAdd(gui)
     repeat wait() until pcall(function()
         gui.Parent = CoreGui
     end)
-end
-
-function isNotLocked(v)
-    if not v:GetAttribute("Locked") and UI_LOCK == false then
-        return true
-    end
 end
 
 function CreateNotification(title, text)
@@ -74,83 +68,235 @@ function CreateHoverEffect(button, isRedButton)
     end
 end
 
--- Create textbox focus effect
-function CreateTextboxEffect(frame)
-    local textbox = frame:FindFirstChild("Textbox")
-    local gradient = frame:FindFirstChild("Gradient")
-    local stroke = frame:FindFirstChild("UIStroke")
-    
-    if not textbox or not gradient or not stroke then return end
-    
-    local gradientTween = stroke:FindFirstChild("UIGradient")
-    if not gradientTween then return end
-    
-    local tween_1_in = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 0})
-    local tween_2_in = TweenService:Create(gradientTween, INFO_DOT25_QUAD, {Offset = Vector2.new(0, -.5)})
-    
-    local tween_1_out = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 1})
-    local tween_2_out = TweenService:Create(gradientTween, INFO_DOT25_QUAD, {Offset = Vector2.new(0, 0)})
-    
-    textbox.Focused:Connect(function()
-        tween_1_in:Play()
-        tween_2_in:Play()
-    end)
-    
-    textbox.FocusLost:Connect(function()
-        tween_1_out:Play()
-        tween_2_out:Play()
-    end)
-end
-
--- Create loading bar animation
-function AnimateLoadingBar(contentFrame, duration)
-    duration = duration or 2
-    local steps = 50
-    local stepDuration = duration / steps
-    
-    for i = 1, steps do
-        local progress = i / steps
-        TweenService:Create(contentFrame, TweenInfo.new(stepDuration, Enum.EasingStyle.Linear), {
-            Size = UDim2.new(progress, 0, 1, 0)
-        }):Play()
-        task.wait(stepDuration)
-    end
-end
-
--- Fade in/out GUI
-function FadeGUI(gui, fadeIn, duration)
-    duration = duration or 0.25
-    local targetTransparency = fadeIn and 0 or 1
-    TweenService:Create(gui, TweenInfo.new(duration, Enum.EasingStyle.Quad), {
-        GroupTransparency = targetTransparency
-    }):Play()
-    task.wait(duration)
-end
-
 -- Main initialization
 CreateNotification("Script", "Initializing...")
 
-print("Main values and methods loaded!")
-print("INFO_DOT25_QUAD:", INFO_DOT25_QUAD)
-print("Player:", plr.Name)
+-- Create Main GUI
+local MAIN_GUI = Instance.new("ScreenGui")
+MAIN_GUI.Name = "MainHubGUI"
+MAIN_GUI.ResetOnSpawn = false
+MAIN_GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- YOUR MAIN SCRIPT HERE
--- Example usage:
---[[
-    local gui = Instance.new("ScreenGui")
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0.2, 0, 0.1, 0)
-    button.Position = UDim2.new(0.4, 0, 0.45, 0)
-    button.Text = "Click Me"
-    button.Parent = gui
-    CoreGuiAdd(gui)
-    
-    CreateHoverEffect(button, true)
-    
-    button.MouseButton1Click:Connect(function()
-        CreateNotification("Button", "Clicked!")
-    end)
-]]
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0.35, 0, 0.45, 0)
+MainFrame.Position = UDim2.new(0.325, 0, 0.275, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = MAIN_GUI
 
-UI_LOCK = false
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 15)
+UICorner.Parent = MainFrame
+
+-- Gradient Background
+local Gradient = Instance.new("Frame")
+Gradient.Size = UDim2.new(1, 0, 1, 0)
+Gradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Gradient.BorderSizePixel = 0
+Gradient.Name = "Gradient"
+Gradient.Parent = MainFrame
+
+local UIGradient = Instance.new("UIGradient")
+UIGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(157, 2, 31)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(46, 28, 31)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))
+}
+UIGradient.Rotation = -90
+UIGradient.Transparency = NumberSequence.new{
+    NumberSequenceKeypoint.new(0, 0.9),
+    NumberSequenceKeypoint.new(1, 0.9)
+}
+UIGradient.Parent = Gradient
+
+local GradientCorner = Instance.new("UICorner")
+GradientCorner.CornerRadius = UDim.new(0, 15)
+GradientCorner.Parent = Gradient
+
+-- Pattern
+local Pattern = Instance.new("ImageLabel")
+Pattern.Size = UDim2.new(1, 0, 1, 0)
+Pattern.BackgroundTransparency = 1
+Pattern.Image = "rbxassetid://2151741365"
+Pattern.ImageTransparency = 0.6
+Pattern.ScaleType = Enum.ScaleType.Tile
+Pattern.TileSize = UDim2.new(0, 250, 0, 250)
+Pattern.ZIndex = 0
+Pattern.Parent = Gradient
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0.8, 0, 0.12, 0)
+Title.Position = UDim2.new(0.1, 0, 0.08, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "HoHo Hub"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.Font = Enum.Font.SourceSansBold
+Title.ZIndex = 2
+Title.Parent = MainFrame
+
+-- Logo
+local Logo = Instance.new("ImageLabel")
+Logo.Size = UDim2.new(0.15, 0, 0.2, 0)
+Logo.Position = UDim2.new(0.05, 0, 0.05, 0)
+Logo.BackgroundTransparency = 1
+Logo.Image = "rbxassetid://16073594682"
+Logo.ScaleType = Enum.ScaleType.Fit
+Logo.ZIndex = 2
+Logo.Parent = MainFrame
+
+-- Button Container
+local ButtonContainer = Instance.new("Frame")
+ButtonContainer.Size = UDim2.new(0.9, 0, 0.6, 0)
+ButtonContainer.Position = UDim2.new(0.05, 0, 0.3, 0)
+ButtonContainer.BackgroundTransparency = 1
+ButtonContainer.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 10)
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ButtonContainer
+
+-- Function to create buttons
+local function CreateButton(text, order, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 50)
+    Button.BackgroundColor3 = Color3.fromRGB(194, 3, 38)
+    Button.BorderSizePixel = 0
+    Button.Text = ""
+    Button.AutoButtonColor = false
+    Button.LayoutOrder = order
+    Button.ZIndex = 2
+    Button.Parent = ButtonContainer
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 10)
+    ButtonCorner.Parent = Button
+    
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(253, 1, 12)
+    ButtonStroke.Transparency = 0.5
+    ButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    ButtonStroke.Parent = Button
+    
+    local ButtonTitle = Instance.new("TextLabel")
+    ButtonTitle.Size = UDim2.new(1, 0, 1, 0)
+    ButtonTitle.BackgroundTransparency = 1
+    ButtonTitle.Text = text
+    ButtonTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ButtonTitle.TextScaled = true
+    ButtonTitle.Font = Enum.Font.SourceSansBold
+    ButtonTitle.Name = "Title"
+    ButtonTitle.Parent = Button
+    
+    local TextSizeConstraint = Instance.new("UITextSizeConstraint")
+    TextSizeConstraint.MaxTextSize = 20
+    TextSizeConstraint.Parent = ButtonTitle
+    
+    CreateHoverEffect(Button, true)
+    
+    if callback then
+        Button.MouseButton1Click:Connect(callback)
+    end
+    
+    return Button
+end
+
+-- Create buttons
+CreateButton("Feature 1", 1, function()
+    CreateNotification("Feature 1", "Activated!")
+end)
+
+CreateButton("Feature 2", 2, function()
+    CreateNotification("Feature 2", "Activated!")
+end)
+
+CreateButton("Feature 3", 3, function()
+    CreateNotification("Feature 3", "Activated!")
+end)
+
+-- Close Button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0.9, 0, 0, 40)
+CloseButton.Position = UDim2.new(0.05, 0, 0.92, 0)
+CloseButton.AnchorPoint = Vector2.new(0, 1)
+CloseButton.BackgroundColor3 = Color3.fromRGB(248, 4, 46)
+CloseButton.BackgroundTransparency = 1
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = ""
+CloseButton.AutoButtonColor = false
+CloseButton.ZIndex = 2
+CloseButton.Parent = MainFrame
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 10)
+CloseCorner.Parent = CloseButton
+
+local CloseStroke = Instance.new("UIStroke")
+CloseStroke.Color = Color3.fromRGB(253, 1, 12)
+CloseStroke.Thickness = 1.25
+CloseStroke.Transparency = 0.25
+CloseStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+CloseStroke.Parent = CloseButton
+
+local CloseTitle = Instance.new("TextLabel")
+CloseTitle.Size = UDim2.new(1, 0, 1, 0)
+CloseTitle.BackgroundTransparency = 1
+CloseTitle.Text = "CLOSE"
+CloseTitle.TextColor3 = Color3.fromRGB(248, 4, 46)
+CloseTitle.TextScaled = true
+CloseTitle.Font = Enum.Font.SourceSansSemibold
+CloseTitle.Name = "Title"
+CloseTitle.Parent = CloseButton
+
+CreateHoverEffect(CloseButton, false)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MAIN_GUI:Destroy()
+    CreateNotification("Script", "Closed!")
+end)
+
+-- Draggable functionality
+local UIS = game:GetService("UserInputService")
+local dragToggle = nil
+local dragSpeed = 0.25
+local dragStart = nil
+local startPos = nil
+
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    TweenService:Create(MainFrame, TweenInfo.new(dragSpeed, Enum.EasingStyle.Quad), {Position = position}):Play()
+end
+
+MainFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if dragToggle then
+            updateInput(input)
+        end
+    end
+end)
+
+-- Add to CoreGui
+CoreGuiAdd(MAIN_GUI)
+
+-- Final notification
 CreateNotification("Script", "Ready!")
+print("Main Hub loaded successfully!")
